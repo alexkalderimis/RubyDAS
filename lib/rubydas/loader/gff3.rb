@@ -22,6 +22,7 @@ module RubyDAS
             def store
                 @gff.records.each do |rec|
                     args = Hash.new
+                    args[:segment_id] = rec.seqname
                     args[:label] = rec.get_attribute("Name")
                     args[:public_id] = rec.get_attribute("ID")
                     args[:type] = rec.feature

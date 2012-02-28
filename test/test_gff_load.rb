@@ -27,6 +27,14 @@ fs.each do |f|
     puts f
 end
 
+sgs = Segment.all
+
+puts sgs.size
+
+sgs.each do |s|
+    puts "#{s.label}: #{s.features.size} features"
+end
+
 
 
 

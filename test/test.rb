@@ -17,9 +17,11 @@ p adapter
 puts "CREATING TYPE"
 t = FeatureType.create(:label => "type-a")
 
+puts "CREATING SEGMENT"
+s = Segment.create(:public_id => "10", :label => "MAL10")
 
 puts "CREATING FEATURE"
-f = Feature.new(:public_id => "ENGN0001234", :label => "feature-a", :start => 100, :end => 200, :score => 1.234, :feature_type => t)
+f = Feature.new(:segment => s, :public_id => "ENGN0001234", :label => "feature-a", :start => 100, :end => 200, :score => 1.234, :feature_type => t)
 
 p f
 puts "NEW FEATURE #{f} id=#{f.id}"
@@ -44,7 +46,7 @@ fs.each do | f |
     puts "FEATURE = #{f}"
 end
 
-f2 = Feature.make(:public_id => "ENGN0001234", :label => "feature-b", :start => 100, :end => 200, :score => 1.234, :feature_type => t, 
+f2 = Feature.make(:segment => s, :public_id => "ENGN0001234", :label => "feature-b", :start => 100, :end => 200, :score => 1.234, :feature_type => t, 
                  :notes => [{:text => "some text"}, {:text => "more text"}],
                  :links => [
                      {:href => "http://somewhere.org", :link_text => "somewhere"}, 
@@ -57,7 +59,7 @@ f2 = Feature.make(:public_id => "ENGN0001234", :label => "feature-b", :start => 
                  ]
                  )
 
-                 f2 = Feature.make(:public_id => "ENGN0001234", :label => "feature-c", :start => 200, :end => 400, :score => 1.234, :type => "label -b", 
+                 f2 = Feature.make(:segment_id => "MY-SEGMENT", :public_id => "ENGN0001234", :label => "feature-c", :start => 200, :end => 400, :score => 1.234, :type => "label -b", 
                  :notes => [{:text => "some text"}, {:text => "more text"}],
                  :links => [
                      {:href => "http://somewhere.org", :link_text => "somewhere"}, 
@@ -77,7 +79,7 @@ fs = Feature.all
 puts fs.size
 
 fs.each do | f | 
-    puts "FEATURE = #{f.label}, #{f.feature_type.label}"
+    puts "FEATURE = #{f.label}, #{f.feature_type.label} #{f.segment.label}"
     f.notes.each {|n| puts n.text}
     f.targets.each {|n| p n}
     f.links.each {|n| p n}

@@ -21,6 +21,7 @@ class Feature
 #  has n, :parts, self
   
   belongs_to :feature_type 
+  belongs_to :segment
 
   def to_s 
       return "#{public_id} #{label} #{start}..#{self.end}"
@@ -29,10 +30,10 @@ class Feature
   def self.make(attrs)
 
       ft = attrs.delete(:type)
-
-      puts ft
-
       attrs[:feature_type] = FeatureType.first_or_create(:label => ft) if ft
+
+      seg = attrs.delete(:segment_id)
+      attrs[:segment] = Segment.first_or_create(:public_id => seg, :label => seg) if seg
 
       relationships = {
           :links => Link,
@@ -87,6 +88,16 @@ class Link
   property :link_text, String 
   
   belongs_to :feature
+end
+
+class Segment
+    include DataMapper::Resource
+    property :id, Serial
+    property :public_id, String
+    property :segment_type, String
+    property :label, String
+
+    has n, :features
 end
 
 class FeatureType
