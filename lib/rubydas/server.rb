@@ -89,6 +89,12 @@ get '/das/rubydas/features' do
     end
   end
   
+  response.headers["X-DAS-Capabilities"] = "features/1.1"
+  response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["X-DAS-Status"] = "200"
+  response.headers["X-DAS-Version"] = "DAS/1.6"
+  
   builder :features
 
 end
