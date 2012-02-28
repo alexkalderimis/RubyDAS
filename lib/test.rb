@@ -3,7 +3,7 @@ require "data_mapper"
 require "rubydas/model/feature"
 
 DataMapper::Logger.new($stdout, :debug)
-DataMapper.setup(:default, 'postgres://alex:alex@localhost/rubydas')
+DataMapper.setup(:default, 'sqlite::memory:')
 
 puts "CREATING DB"
 DataMapper.auto_migrate!
