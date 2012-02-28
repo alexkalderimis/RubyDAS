@@ -30,19 +30,19 @@ class Feature
 
       attrs[:feature_type] = FeatureType.first_or_create(:label => ft) if ft
 
-      links = (attrs.delete(:links) || []).map do |link|
-          Link.create(link)
-      end 
+      relationships = {
+          :links => Link,
+          :notes => Note,
+          :targets => Target
+      }
 
-      notes = (attrs.delete(:notes) || []).map { |n| Note.create(n) }
-      targets = (attrs.delete(:targets) || []).map { |n| Target.create(n) }
-
-      p attrs
+      assocs = Hash[relationships.map { |k, v| [k, (attrs.delete(k) || []).map {|x| v.create(x)}]}]
       f = Feature.new(attrs)
 
-      f.links.concat(links)
-      f.notes.concat(notes)
-      f.targets.concat(targets)
+      assocs.each do |k, v|
+          f.send(k).concat(v)
+      end
+
       f.save
       f
   end
