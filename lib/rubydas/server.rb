@@ -33,7 +33,7 @@ get '/das/rubydas/features' do
       @stop = @positions[1]
       @segments << SegmentCall.new(@segment_name,@start,@stop)
     else
-      @segments << SegmentCall.new(@segment_name,0,0)
+      @segments << SegmentCall.new(@segment_name,false,false)
     end
   end   
   
@@ -49,19 +49,43 @@ get '/das/rubydas/features' do
   @feature_ids = []
   @query["feature_id"].each {|f| @feature_ids << f}
   
-  # get all group_ids of interest
-  @group_ids = []
-  @query["group_id"].each {|g| @group_ids << g}
-  
-  @segments.to_s
-  "Types: "+@types.to_s + "<br/>"+ "Group-ID: "+@group_ids.to_s+"<br/>"+"Feature-ID: "+@feature_ids.to_s+"<br/>"+"Segments: "+@segments.to_s+"<br/>Categories:"+@categories.to_s
-
   # now the fun part starts, check for all the different parameter-things which can be available
   # case #1: segments not empty
   if @segments != []
     @features_hash = {}
     @segments.each do |s|
-      @local_features = Feature.all(:start.gte => s.start, :start.lte => s.stop) | Feature.all(:stop.gte => s.start, :stop.lte => s.stop)
+      
+      if s.start != false and s.stop != false 
+        @local_features = Feature.all(:segment_id => s.segment_name, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:stop.gte => s.start, :stop.lte => s.stop)
+      else
+        @local_features = Feature.all(:segment_id => s.segment_name)
+      end
+      
+      # if types not empty filter for those type-labels which are requested
+      if @types != [] 
+        @filtered_features = []
+        @local_features.each do |lf| 
+          if @types.include?(lf.feature_type.label) 
+            @filtered_features << lf
+          end
+        end
+        @local_features = @filtered_features
+      end
+      
+      # if categories not empty filter for those type-categories which are requested
+      if @categories != []
+        @filtered_features = []
+        @local_features.each do |lf|
+          if @categories.include?(lf.feature_type.category)
+            @filtered_features << lf
+          end
+        end
+        @local_features = @filtered_features
+      end
+      
+      # add those filtered features to features-hash. key => segment-class, value = array of features
+      @features_hash[s] = @local_features
+    end
         
 
 end
