@@ -15,17 +15,29 @@ module RubyDAS
 
             attr_reader :gff
 
-            def initialize filename
-                @gff = Bio::GFF::GFF3.new(File.open(filename))
+            def initialize
+                @types = Hash[]
+                @segments = Hash[]
             end
 
-            def store
-                @gff.records.each do |rec|
+            def store filename
+                gff = Bio::GFF::GFF3.new(File.open(filename))
+                puts "storing #{filename}"
+                gff.records.each do |rec|
                     args = Hash.new
-                    args[:segment_id] = rec.seqname
+                    if @types.has_key? rec.feature
+                        args[:feature_type] = @types[rec.feature]
+                    else 
+                        args[:feature_type] = @types[rec.feature] = FeatureType.create(:label => rec.feature)
+                    end
+                    if @segments.has_key? rec.seqname
+                        args[:segment] = @segments[rec.seqname]
+                    else 
+                        args[:segment] = @segments[rec.seqname] = Segment.create(:public_id => rec.seqname, :label => rec.feature)
+                    end
+
                     args[:label] = rec.get_attribute("Name")
                     args[:public_id] = rec.get_attribute("ID")
-                    args[:type] = rec.feature
                     args[:start] = rec.start
                     args[:end] = rec.end
                     args[:score] = rec.score
@@ -36,6 +48,8 @@ module RubyDAS
                     end
 
                     Feature.make(args)
+                    print "."
+                    STDOUT.flush
                 end
             end
         end

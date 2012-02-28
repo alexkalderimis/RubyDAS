@@ -57,8 +57,10 @@ task :build_test_db do
     require "data_mapper"
     DataMapper.setup(:default, 'sqlite:data/test.db')
     DataMapper.auto_migrate!
-    loader = RubyDAS::Loader::GFF3.new("test/gff3/MAL10.gff3")
-    loader.store
+    loader = RubyDAS::Loader::GFF3.new
+    Dir.glob("test/gff3/MAL*gff3") do |name|
+        loader.store name
+    end
 end
 
 
