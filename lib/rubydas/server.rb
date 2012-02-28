@@ -2,7 +2,8 @@ require 'sinatra'
 require 'rubygems'
 require 'cgi'
 require 'data_mapper' 
-require "rubydas/model/feature"
+require 'builder'
+require "/Users/gedankenstuecke/Documents/RubyDAS/lib/rubydas/model/feature"
 
 
 class SegmentCall
@@ -56,7 +57,7 @@ get '/das/rubydas/features' do
     @segments.each do |s|
       
       if s.start != false and s.stop != false 
-        @local_features = Feature.all(:segment_id => s.segment_name, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:stop.gte => s.start, :stop.lte => s.stop)
+        @local_features = Feature.all(:segment_id => s.segment_name, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:end.gte => s.start, :end.lte => s.stop)
       else
         @local_features = Feature.all(:segment_id => s.segment_name)
       end
@@ -86,6 +87,14 @@ get '/das/rubydas/features' do
       # add those filtered features to features-hash. key => segment-class, value = array of features
       @features_hash[s] = @local_features
     end
-        
+  end
+  
+  response.headers["X-DAS-Capabilities"] = "features/1.1"
+  response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["X-DAS-Status"] = "200"
+  response.headers["X-DAS-Version"] = "DAS/1.6"
+  
+  builder :features
 
 end
