@@ -22,6 +22,10 @@ class Feature
   
   belongs_to :feature_type 
 
+  def to_s 
+      return "#{public_id} #{label} #{start}..#{self.end}"
+  end
+
   def self.make(attrs)
 
       ft = attrs.delete(:type)
@@ -43,7 +47,13 @@ class Feature
           f.send(k).concat(v)
       end
 
-      f.save
+      unless f.save
+          f.errors.each do |e|
+              puts e
+          end
+          return nil
+      end
+
       f
   end
   
