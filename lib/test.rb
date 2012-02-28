@@ -13,10 +13,11 @@ adapter = DataMapper.repository(:default).adapter
 p adapter
 
 puts "CREATING TYPE"
-t = Type.create(:label => "type-a")
+t = FeatureType.create(:label => "type-a")
+
 
 puts "CREATING FEATURE"
-f = Feature.new(:label => "feature-a", :start => 100, :stop => 200, :score => 1.234, :type => t)
+f = Feature.new(:label => "feature-a", :start => 100, :stop => 200, :score => 1.234, :feature_type => t)
 
 p f
 puts "NEW FEATURE #{f} id=#{f.id}"
@@ -24,6 +25,7 @@ puts "NEW FEATURE #{f} id=#{f.id}"
 if (f.save) 
     puts "Hooray"
 else
+    puts f.errors
     f.errors.each { |e| puts e }
 end
 
@@ -39,3 +41,71 @@ puts fs.size
 fs.each do | f | 
     puts "FEATURE = #{f}"
 end
+
+f2 = Feature.make(:label => "feature-b", :start => 100, :stop => 200, :score => 1.234, :feature_type => t, 
+                 :notes => [{:text => "some text"}, {:text => "more text"}],
+                 :links => [
+                     {:href => "http://somewhere.org", :link_text => "somewhere"}, 
+                     {:href => "http://somewhere.else.org", :link_text => "somewhere else"}
+                 ],
+                 :targets => [
+                     {:start => 0, :stop => 1, :name => "foo"},
+                     {:start => 0, :stop => 3, :name => "boo"},
+                     {:start => 0, :stop => 5, :name => "coo"}
+                 ]
+                 )
+
+f2 = Feature.make(:label => "feature-c", :start => 200, :stop => 400, :score => 1.234, :type => "label -b", 
+                 :notes => [{:text => "some text"}, {:text => "more text"}],
+                 :links => [
+                     {:href => "http://somewhere.org", :link_text => "somewhere"}, 
+                     {:href => "http://somewhere.else.org", :link_text => "somewhere else"}
+                 ],
+                 :targets => [
+                     {:start => 0, :stop => 1, :name => "foo"},
+                     {:start => 0, :stop => 3, :name => "boo"},
+                     {:start => 0, :stop => 5, :name => "coo"}
+                 ]
+                 )
+
+
+puts "QUERYING"
+fs = Feature.all
+
+puts fs.size
+
+fs.each do | f | 
+    puts "FEATURE = #{f.label}, #{f.feature_type.label}"
+    f.notes.each {|n| puts n.text}
+    f.targets.each {|n| p n}
+    f.links.each {|n| p n}
+end
+
+puts "QUERYING 3"
+ns = Note.all
+
+puts "NOTES: #{ns.size}"
+
+ns.each do |n| 
+    puts n 
+end
+
+puts "QUERYING 4"
+ls = Link.all
+
+puts "LINKS: #{ls.size}"
+
+ls.each do |n| 
+    puts n 
+end
+
+puts "QUERYING 5"
+ls = Target.all
+
+puts "TARGET: #{ls.size}"
+
+ls.each do |n| 
+    puts n 
+end
+
+

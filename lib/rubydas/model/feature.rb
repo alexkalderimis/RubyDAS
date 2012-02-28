@@ -16,10 +16,35 @@ class Feature
   has n, :links
   has n, :notes
   has n, :targets
-  has n, :parents, self
-  has n, :parts, self
+#  has n, :parents, self
+#  has n, :parts, self
   
-  belongs_to :type 
+  belongs_to :feature_type 
+
+  def self.make(attrs)
+
+      ft = attrs.delete(:type)
+
+      puts ft
+
+      attrs[:feature_type] = FeatureType.first_or_create(:label => ft) if ft
+
+      links = (attrs.delete(:links) || []).map do |link|
+          Link.create(link)
+      end 
+
+      notes = (attrs.delete(:notes) || []).map { |n| Note.create(n) }
+      targets = (attrs.delete(:targets) || []).map { |n| Target.create(n) }
+
+      p attrs
+      f = Feature.new(attrs)
+
+      f.links.concat(links)
+      f.notes.concat(notes)
+      f.targets.concat(targets)
+      f.save
+      f
+  end
   
 end
 
@@ -53,7 +78,7 @@ class Link
   belongs_to :feature
 end
 
-class Type
+class FeatureType
   include DataMapper::Resource
   
   property :id, Serial
