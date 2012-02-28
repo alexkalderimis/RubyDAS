@@ -17,7 +17,7 @@ end
 
 get '/das/rubydas/features' do
   
-  DataMapper.setup(:default, 'sqlite:///Users/gedankenstuecke/Documents/RubyDAS/lib/test.db')
+  DataMapper.setup(:default, 'sqlite:///Users/gedankenstuecke/Documents/RubyDAS/data/test.db')
   adapter = DataMapper.repository(:default).adapter
   
   @query = CGI.parse(request.query_string)
