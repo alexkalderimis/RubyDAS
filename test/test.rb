@@ -2,7 +2,7 @@ $:.unshift File.join(File.dirname(__FILE__), "..", "lib")
 
 require "rubygems"
 require "data_mapper"
-require "rubydas/model/feature"
+require_relative "../lib/rubydas/model/feature"
 
 DataMapper::Logger.new($stdout, :debug)
 DataMapper.setup(:default, 'sqlite::memory:')

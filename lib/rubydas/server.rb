@@ -3,7 +3,7 @@ require 'rubygems'
 require 'cgi'
 require 'data_mapper' 
 require 'builder'
-require "/Users/gedankenstuecke/Documents/RubyDAS/lib/rubydas/model/feature"
+require_relative "model/feature"
 
 
 class SegmentCall
@@ -59,7 +59,7 @@ get '/das/rubydas/features' do
       if Segment.all(:public_id => s.segment_name) != []
         @segment_id = Segment.first(:public_id => s.segment_name).id
         if s.start != false and s.stop != false 
-          @local_features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:end.gte => s.start, :end.lte => s.stop)
+          @local_features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:segment_id => @segment_id, :end.gte => s.start, :end.lte => s.stop)
         else
           @local_features = Feature.all(:segment_id => @segment_id, :order => [:start.asc])
           s.start = @local_features[0].start
@@ -92,12 +92,12 @@ get '/das/rubydas/features' do
         @features_hash[s] = @local_features
         
       else
-        @features_hash[s] = "unkown_segment"
+        @features_hash[s] = "unknown_segment"
       end
     end
   end
   
-  response.headers["X-DAS-Capabilities"] = "features/1.1"
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
   response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
   response.headers["Access-Control-Allow-Origin"] = "*"
   response.headers["X-DAS-Status"] = "200"
@@ -105,4 +105,77 @@ get '/das/rubydas/features' do
   
   builder :features
 
+end
+
+get '/das/rubydas/types' do
+  
+  DataMapper.setup(:default, 'sqlite:///Users/gedankenstuecke/Documents/RubyDAS/data/test.db')
+  adapter = DataMapper.repository(:default).adapter
+  
+  @query = CGI.parse(request.query_string)
+  
+  @segments = []
+  @query["segment"].each do |s|
+    @segment_elements = s.split(":")
+    @segment_name = @segment_elements[0]
+    if @segment_elements[1] != nil
+      @positions = @segment_elements[1].split(",")
+      @start = @positions[0]
+      @stop = @positions[1]
+      @segments << SegmentCall.new(@segment_name,@start,@stop)
+    else
+      @segments << SegmentCall.new(@segment_name,false,false)
+    end
+  end
+    
+  @filter_types = []
+  @query["type"].each {|t| @filter_types << t}
+  @types = FeatureType.all()
+  
+  if @segments != []
+    
+    @out_hash = {}
+    
+    @segments.each do |s|
+      if Segment.all(:public_id => s.segment_name) != []
+        @types_hash = {}
+        @segment_id = Segment.first(:public_id => s.segment_name).id
+        @types.each do |t|
+          if @filter_types == [] or @filter_types.include?(t.label)
+            if s.start != false and s.stop != false 
+              @features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :end.gte => s.start, :end.lte => s.stop, :feature_type_id => t.id)
+              @types_hash[t.label] = @features.size
+            else
+              @features = Feature.all(:segment_id => @segment_id, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :feature_type_id => t.id, :order => [:start.asc])
+              @types_hash[t.label] = @features.size
+              s.start = @features[0].start
+              s.stop = @features[-1].end
+            end
+          end
+        end
+        @out_hash[s] = @types_hash
+      else
+        @out_hash[s] = "unknown_segment"
+      end
+    end
+    
+  else
+    @out_hash = {}
+    @types_hash = {}
+    @types.each do |t|
+      if @filter_types == [] or @filter_types.include?(t.label)
+        @types_hash[t.label] = Feature.count(:feature_type_id => t.id)
+      end
+    end
+    @out_hash["all"] = @types_hash
+  end
+  
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
+  response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["X-DAS-Status"] = "200"
+  response.headers["X-DAS-Version"] = "DAS/1.6"
+  
+  builder :types
+  
 end
