@@ -3,7 +3,7 @@ require 'rubygems'
 require 'cgi'
 require 'data_mapper' 
 require 'builder'
-require "/Users/gedankenstuecke/Documents/RubyDAS/lib/rubydas/model/feature"
+require_relative "model/feature"
 
 
 class SegmentCall
