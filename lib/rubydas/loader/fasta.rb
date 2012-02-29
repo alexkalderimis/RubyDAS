@@ -23,7 +23,7 @@ module RubyDAS
                     entry.seq.each_char do |c|
                         pos += 1
                         current_seq << c
-                        if current_seq.length >= 1000
+                        if current_seq.length >= 1000 || pos >= entry.length
                             sf = SequenceFragment.new(
                                 :fragment => current_seq,
                                 :start => pos - current_seq.length,
