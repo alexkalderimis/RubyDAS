@@ -92,7 +92,7 @@ get '/das/rubydas/features' do
         @features_hash[s] = @local_features
         
       else
-        @features_hash[s] = "unkown_segment"
+        @features_hash[s] = "unknown_segment"
       end
     end
   end
@@ -133,25 +133,30 @@ get '/das/rubydas/types' do
   @types = FeatureType.all()
   
   if @segments != []
+    
     @out_hash = {}
     
     @segments.each do |s|
-      @types_hash = {}
-      @segment_id = Segment.first(:public_id => s.segment_name).id
-      @types.each do |t|
-        if @filter_types == [] or @filter_types.include?(t.label)
-          if s.start != false and s.stop != false 
-            @features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :end.gte => s.start, :end.lte => s.stop, :feature_type_id => t.id)
-            @types_hash[t.label] = @features.size
-          else
-            @features = Feature.all(:segment_id => @segment_id, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :feature_type_id => t.id, :order => [:start.asc])
-            @types_hash[t.label] = @features.size
-            s.start = @features[0].start
-            s.stop = @features[-1].end
+      if Segment.all(:public_id => s.segment_name) != []
+        @types_hash = {}
+        @segment_id = Segment.first(:public_id => s.segment_name).id
+        @types.each do |t|
+          if @filter_types == [] or @filter_types.include?(t.label)
+            if s.start != false and s.stop != false 
+              @features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :end.gte => s.start, :end.lte => s.stop, :feature_type_id => t.id)
+              @types_hash[t.label] = @features.size
+            else
+              @features = Feature.all(:segment_id => @segment_id, :feature_type_id => t.id) | Feature.all(:segment_id => @segment_id, :feature_type_id => t.id, :order => [:start.asc])
+              @types_hash[t.label] = @features.size
+              s.start = @features[0].start
+              s.stop = @features[-1].end
+            end
           end
         end
+        @out_hash[s] = @types_hash
+      else
+        @out_hash[s] = "unknown_segment"
       end
-      @out_hash[s] = @types_hash
     end
     
   else

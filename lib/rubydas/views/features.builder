@@ -3,7 +3,7 @@ xml.DASGFF  do
   xml.GFF :version => "1.0", :href => request.url do
     if @features_hash != nil
       @features_hash.each do |segment,features|
-        if features != "unkown_segment"
+        if features != "unknown_segment"
           xml.SEGMENT :id => segment.segment_name, :version => "1.0", :start => segment.start, :stop => segment.stop do
             features.each do |feature|
               xml.FEATURE :id => feature.id do 
