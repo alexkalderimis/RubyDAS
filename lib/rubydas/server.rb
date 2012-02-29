@@ -56,36 +56,44 @@ get '/das/rubydas/features' do
     @features_hash = {}
     @segments.each do |s|
       
-      if s.start != false and s.stop != false 
-        @local_features = Feature.all(:segment_id => s.segment_name, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:end.gte => s.start, :end.lte => s.stop)
+      if Segment.all(:public_id => s.segment_name) != []
+        @segment_id = Segment.first(:public_id => s.segment_name).id
+        if s.start != false and s.stop != false 
+          @local_features = Feature.all(:segment_id => @segment_id, :start.gte => s.start, :start.lte => s.stop) | Feature.all(:end.gte => s.start, :end.lte => s.stop)
+        else
+          @local_features = Feature.all(:segment_id => @segment_id, :order => [:start.asc])
+          s.start = @local_features[0].start
+          s.stop = @local_features[-1].end
+        end
+        
+        # if types not empty filter for those type-labels which are requested
+        if @types != [] 
+          @filtered_features = []
+          @local_features.each do |lf| 
+            if @types.include?(lf.feature_type.label) 
+              @filtered_features << lf
+            end
+          end
+          @local_features = @filtered_features
+        end
+        
+        # if categories not empty filter for those type-categories which are requested
+        if @categories != []
+          @filtered_features = []
+          @local_features.each do |lf|
+            if @categories.include?(lf.feature_type.category)
+              @filtered_features << lf
+            end
+          end
+          @local_features = @filtered_features
+        end
+        
+        # add those filtered features to features-hash. key => segment-class, value = array of features
+        @features_hash[s] = @local_features
+        
       else
-        @local_features = Feature.all(:segment_id => s.segment_name)
+        @features_hash[s] = "unkown_segment"
       end
-      
-      # if types not empty filter for those type-labels which are requested
-      if @types != [] 
-        @filtered_features = []
-        @local_features.each do |lf| 
-          if @types.include?(lf.feature_type.label) 
-            @filtered_features << lf
-          end
-        end
-        @local_features = @filtered_features
-      end
-      
-      # if categories not empty filter for those type-categories which are requested
-      if @categories != []
-        @filtered_features = []
-        @local_features.each do |lf|
-          if @categories.include?(lf.feature_type.category)
-            @filtered_features << lf
-          end
-        end
-        @local_features = @filtered_features
-      end
-      
-      # add those filtered features to features-hash. key => segment-class, value = array of features
-      @features_hash[s] = @local_features
     end
   end
   
