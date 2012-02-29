@@ -53,15 +53,40 @@ Rake::TestTask.new(:live_tests) do |t|
 end
 
 task :build_test_db do
-    require "rubydas/loader/gff3"
+    require "rubydas/model/feature"
+    require "rubydas/model/sequence"
     require "data_mapper"
     DataMapper.setup(:default, 'sqlite:data/test.db')
     DataMapper.auto_migrate!
+end
+
+task :load_test_gff3 do
+    require "rubydas/loader/gff3"
+    require "data_mapper"
+    DataMapper.setup(:default, 'sqlite:data/test.db')
+    DataMapper.auto_upgrade!
     loader = RubyDAS::Loader::GFF3.new
     Dir.glob("test/gff3/MAL*gff3") do |name|
         loader.store name
     end
 end
+
+task :load_test_fa do
+    require "rubydas/loader/fasta"
+    require "data_mapper"
+    DataMapper.setup(:default, 'sqlite:data/test.db')
+    DataMapper.auto_upgrade!
+    loader = RubyDAS::Loader::FASTA.new
+    Dir.glob("test/fasta/MAL*fasta") do |name|
+        loader.store name
+    end
+end
+
+task :build_test_fixture => [:build_test_db, :load_test_fa, :load_test_gff3] do
+    puts "Loaded test fixture"
+end
+
+
 
 
 
