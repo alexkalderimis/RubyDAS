@@ -43,8 +43,8 @@ module RubyDAS
                     args[:score] = rec.score
                     args[:method] = rec.source
                     args[:orientation] = rec.strand
-                    if rec.get_attribute("Description")
-                        args[:notes] = rec.get_attribute("Description").split(",").map {|n| {:text => n}}
+                    if rec.get_attribute("description")
+                        args[:notes] = rec.get_attribute("description").split(",").map {|n| {:text => n}}
                     end
 
                     Feature.make(args)
