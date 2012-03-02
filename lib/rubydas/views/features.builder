@@ -1,4 +1,5 @@
 xml.instruct! :xml, :version => '1.0', :standalone => "yes"
+xml.declare! :DOCTYPE, :DASFEATURES, :SYSTEM, "http://www.biodas.org/dtd/dasgff.dtd"
 xml.DASGFF  do
   xml.GFF :version => "1.0", :href => request.url do
     if @features_hash != nil

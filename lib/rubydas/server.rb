@@ -4,6 +4,7 @@ require 'cgi'
 require 'data_mapper' 
 require 'builder'
 require_relative "model/feature"
+require_relative "model/sequence"
 
 
 class SegmentCall
@@ -177,5 +178,92 @@ get '/das/rubydas/types' do
   response.headers["X-DAS-Version"] = "DAS/1.6"
   
   builder :types
+end
+
+get '/das/rubydas/sequence' do
   
+  DataMapper.setup(:default, 'sqlite:///Users/gedankenstuecke/Documents/RubyDAS/data/test.db')
+  adapter = DataMapper.repository(:default).adapter
+  
+  @query = CGI.parse(request.query_string)
+  
+  # get list of all segments and regions of interest 
+  @segments = []
+  @query["segment"].each do |s|
+    @segment_elements = s.split(":")
+    @segment_name = @segment_elements[0]
+    if @segment_elements[1] != nil
+      @positions = @segment_elements[1].split(",")
+      @start = @positions[0]
+      @stop = @positions[1]
+      @segments << SegmentCall.new(@segment_name,@start,@stop)
+    else
+      @segments << SegmentCall.new(@segment_name,false,false)
+    end
+  end
+  
+  if @segments != []
+    
+    @out_hash = {}
+    
+    @segments.each do |s|
+      if Segment.all(:public_id => s.segment_name) != []
+        @sequence_id = Sequence.first(:public_id => s.segment_name).id
+        
+        # check if start & stop-values are valid, if not set to valid values
+        
+        @sequence_length = Sequence.first(:public_id => s.segment_name).length.to_i
+        if s.start.to_i > @sequence_length
+          s.start = 1
+        end
+        
+        if s.stop.to_i > @sequence_length
+          s.stop = @sequence_length
+        end
+          
+        # check if start & stop-values are %0, so to adjust correct slices are grabbed 
+        if s.start.to_i%1000 != 0
+          @start_number = s.start.to_i-(s.start.to_i%1000)+1000
+        else 
+          @start_number = s.start.to_i-(s.start.to_i%1000)
+        end
+        if s.stop.to_i%1000 != 0
+          @stop_number = s.stop.to_i-(s.stop.to_i%1000)+1000
+        else
+          @stop_number = s.stop.to_i-(s.stop.to_i%1000)+1000
+        end
+        
+        @seq_fragment_array = (@start_number..@stop_number).step(1000).to_a
+        
+        if s.stop.to_i == @sequence_length 
+          @seq_fragment_array.pop
+          @seq_fragment_array << @sequence_length
+        end
+        
+        # iterate over the different slices and concat those slices
+        
+        @seq_fragment_array.each_with_index do |fragment, id|
+          if id == 0
+            @sequence = SequenceFragment.first(:sequence_id => @sequence_id, :end => fragment).fragment[(s.start.to_i%1000)-1,s.stop.to_i-(s.start.to_i-1)]
+          elsif id == @seq_fragment_array.size-1
+            @sequence = @sequence + SequenceFragment.first(:sequence_id => @sequence_id, :end => fragment).fragment[0,(s.stop.to_i%1000)]
+          else
+            @sequence = @sequence + SequenceFragment.first(:sequence_id => @sequence_id, :end => fragment).fragment
+          end
+        end 
+        @out_hash[s] = @sequence
+      else
+        @out_hash[s] = "unknown_segment"
+      end
+    end
+  else
+   @out_hash["empty"] = "empty" 
+  end
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
+  response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["X-DAS-Status"] = "200"
+  response.headers["X-DAS-Version"] = "DAS/1.6"
+  
+  builder :sequences
 end

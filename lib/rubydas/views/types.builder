@@ -1,4 +1,5 @@
 xml.instruct! :xml, :version => '1.0', :standalone => "yes"
+xml.declare! :DOCTYPE, :DASTYPES, :SYSTEM, "http://www.biodas.org/dtd/dastypes.dtd"
 xml.DASGFF  do
   xml.GFF :version => "1.0", :href => request.url do
     @out_hash.each do |segment,types|
