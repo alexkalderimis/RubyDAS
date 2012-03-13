@@ -98,7 +98,7 @@ get '/das/rubydas/features' do
     end
   end
   
-  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0; entry_points/1.1; sequence/1.1"
   response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
   response.headers["Access-Control-Allow-Origin"] = "*"
   response.headers["X-DAS-Status"] = "200"
@@ -171,7 +171,7 @@ get '/das/rubydas/types' do
     @out_hash["all"] = @types_hash
   end
   
-  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0; entry_points/1.1; sequence/1.1"
   response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
   response.headers["Access-Control-Allow-Origin"] = "*"
   response.headers["X-DAS-Status"] = "200"
@@ -259,11 +259,42 @@ get '/das/rubydas/sequence' do
   else
    @out_hash["empty"] = "empty" 
   end
-  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0"
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0; entry_points/1.1; sequence/1.1"
   response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
   response.headers["Access-Control-Allow-Origin"] = "*"
   response.headers["X-DAS-Status"] = "200"
   response.headers["X-DAS-Version"] = "DAS/1.6"
   
   builder :sequences
+end
+
+get '/das/rubydas/entry_points' do
+  
+  DataMapper.setup(:default, 'sqlite:///Users/gedankenstuecke/Documents/RubyDAS/data/test.db')
+  adapter = DataMapper.repository(:default).adapter
+  
+  @query = CGI.parse(request.query_string)
+  
+  if @query["rows"] != []
+    @rows = @query["rows"][0].split("-")
+    if @rows.size > 1
+      @min = @rows[0]
+      @max = @rows[1]
+    else
+      @min = @rows[0]
+      @max = @rows[0]
+    end
+    @sequences = Sequence.all(:id.gte => @min, :id.lte => @max)
+    @sequences.size.to_s
+  else
+    @sequences = Sequence.all()
+    @sequences.size.to_s
+  end
+  response.headers["X-DAS-Capabilities"] = "features/1.1; unknown-segment/1.0; entry_points/1.1; sequence/1.1"
+  response.headers["X-DAS-Server"] = request.env["SERVER_SOFTWARE"].split(" ")[0]
+  response.headers["Access-Control-Allow-Origin"] = "*"
+  response.headers["X-DAS-Status"] = "200"
+  response.headers["X-DAS-Version"] = "DAS/1.6"
+  
+  builder :entry_points
 end
